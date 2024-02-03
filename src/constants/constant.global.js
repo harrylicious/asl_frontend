@@ -1,6 +1,8 @@
-const BASE_URL = 'http://localhost:3000';
-const DOCUMENT_ROOT = 'http://localhost:3000/docs/generated/';
+// const BASE_URL = 'http://localhost:3000';
+const BASE_URL = 'https://asl-backend-61e36445de89.herokuapp.com';
+const DOCUMENT_ROOT = BASE_URL + '/docs/generated/';
 const CUSTOMER = BASE_URL + '/api/customer';
+const CUSTOMER_DESC = BASE_URL + '/api/customer_description';
 const TEMPLATE = BASE_URL + '/api/template';
 const TEMPLATE_ACTIVE = BASE_URL + '/api/template/active';
 const EMPLOYEE_LOGIN = BASE_URL + '/api/employee/login';
@@ -15,6 +17,7 @@ export {
   BASE_URL,
   DOCUMENT_ROOT,
   CUSTOMER,
+  CUSTOMER_DESC,
   TEMPLATE,
   TEMPLATE_ACTIVE,
   TRANSACTION,

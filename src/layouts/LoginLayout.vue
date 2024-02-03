@@ -2,7 +2,7 @@
   <q-layout style="background-color: black;" view="hHh lpR fFf" class="flex items-center justify-center">
     <div class="q-pa-md row items-center q-gutter-md">
       <q-card class="my-card" flat bordered  style="width: 500px;">
-        <q-img src="/src/assets/banner.jpg">
+        <q-img src="banner.jpg">
           <div class="absolute-bottom text-body1 text-center">
           PT. ADJIE SARANA LOGISTIK
         </div>

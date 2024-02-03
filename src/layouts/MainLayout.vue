@@ -36,6 +36,9 @@
               <q-item @click="modal_user = true, btn_user = 'Tambah User'" clickable>
                 <q-item-section>User</q-item-section>
               </q-item>
+              <q-item @click="modal_keterangan = true" clickable>
+                <q-item-section>Keterangan</q-item-section>
+              </q-item>
             </q-list>
           </q-menu>
           <q-toggle
@@ -88,7 +91,7 @@
         <q-item-section v-if="template.is_active == 1" side>
             <q-icon name="check_circle" color="green" />
             <q-tooltip>
-              aa
+              Active
             </q-tooltip>
           </q-item-section>
       </q-item>
@@ -113,33 +116,50 @@
           <div class="col-xs-12 col-sm-12 col-md-12">
             <q-input filled outlined v-model="customer_address" label="Alamat" class="full-width" />
           </div>
-          <div class="col-xs-12 col-sm-12 col-md-12">
-            <q-input
-              label="Keterangan"
-              v-model="invoice_description" filled type="textarea"
-            />
-          </div>
           <div class="col-xs-6 col-sm-6 col-md-6 q-mr-2">
             <q-input filled outlined v-model="invoice_number" label="No. Invoice" class="full-width" />
+          </div>
+          <div class="col-xs-12 col-sm-12 col-md-12">
+            <q-input
+            filled
+            type="textarea"
+            v-model="invoice_description"
+            label="Pilih Keterangan">
+            <template v-slot:append>
+                <q-btn round dense flat icon="add" @click="modal_pilih_keterangan = true"/>
+            </template>
+            </q-input>
           </div>
           <div class="col-xs-6 col-sm-6 col-md-6">
             <q-input type="date" filled outlined v-model="invoice_date" label="Tgl. Invoice" class="full-width" />
           </div>
           <div class="col-xs-6 col-sm-6 col-md-9">
-            <q-input filled outlined v-model.number="cost" v-bind="money" label="Cost" class="full-width" />
+            <q-input filled outlined v-model.number="cost" v-bind="money" label="Biaya" class="full-width">
+            <template v-slot:append>
+              <q-badge outline color="primary" :label="formatted_cost" />
+            </template>
+            </q-input>
           </div>
           <div class="col-xs-6 col-sm-6 col-md-3">
-            <q-input filled outlined type="number" v-model.number="percentage_ppn" label="Tax. Percentage" class="full-width" >
+            <q-input filled outlined type="number" v-model.number="percentage_ppn" label="Persentase Pajak" class="full-width" >
             <template v-slot:append>
               <q-icon name="percent" />
             </template>
             </q-input>
           </div>
           <div class="col-xs-12 col-sm-12 col-md-12">
-            <q-input filled outlined v-model.number="tax" v-bind="money" label="Tax. in rupiah" class="full-width" />
+            <q-input filled outlined v-model.number="tax" v-bind="money" label="Pajak dalam rupiah" class="full-width">
+              <template v-slot:append>
+                <q-badge outline color="primary" :label="formatted_tax" />
+              </template>
+            </q-input>
           </div>
           <div class="col-xs-12 col-sm-12 col-md-12">
-            <q-input filled outlined v-model.number="total" v-bind="money" label="Total (Cost + Tax)" class="full-width" />
+            <q-input filled outlined v-model.number="total" v-bind="money" label="Total (Biaya + Pajak)" class="full-width">
+              <template v-slot:append>
+                <q-badge outline color="primary" :label="formatted_total" />
+              </template>
+            </q-input>
           </div>
           <div class="col-xs-12 col-sm-12 col-md-12">
             <q-input filled outlined v-model="terbilang" label="Terbilang" class="full-width" />
@@ -230,6 +250,12 @@
                   <q-item-section>
                     <q-item-label caption>No. Invoice</q-item-label>
                     <q-item-label>{{ selected_transaction.invoice_number }}</q-item-label>
+                  </q-item-section>
+                </q-item>
+                <q-item clickable v-ripple>
+                  <q-item-section>
+                    <q-item-label caption>Keterangan</q-item-label>
+                    <q-item-label>{{ selected_transaction.description }}</q-item-label>
                   </q-item-section>
                 </q-item>
                 <q-item clickable v-ripple>
@@ -464,6 +490,102 @@
 
   </q-dialog>
 
+  <q-dialog v-model="modal_keterangan">
+    <q-card style="width: 900px; max-width: 90vw;">
+      <q-bar class="bg-primary text-white">
+        <q-space />
+        <q-btn dense flat icon="close" v-close-popup>
+          <q-tooltip class="bg-white text-primary">Close</q-tooltip>
+        </q-btn>
+      </q-bar>
+      <div class="row">
+        <div class="col-8">
+          <q-card-section>
+            <div class="text-h6">Kelola Keterangan</div>
+            <div class="text-h7">Klik untuk mengubah</div>
+          </q-card-section>
+          <q-card-section>
+            <q-list bordered>
+              <q-item v-for="(desc, index) in data_customer_desc" @click="SelectDataKeterangan(desc)" class="q-my-sm" clickable v-ripple>
+                <q-item-section avatar>
+                  <q-avatar color="primary" text-color="white">
+                    {{ index + 1 }}
+                  </q-avatar>
+                </q-item-section>
+
+                <q-item-section>
+                  <q-item-label>{{desc }}</q-item-label>
+                </q-item-section>
+
+                <q-item-section v-if="level_active_user == 'admin'" side @click="modal_confirm_delete_keterangan = true">
+                  <q-icon name="delete" color="red" />
+                </q-item-section>
+              </q-item>
+
+            </q-list>
+          </q-card-section>
+
+        </div>
+        <div class="col">
+          <q-card-section>
+            <div class="text-h6">Aksi</div>
+            <div class="text-h7">Buat baru atau ubah</div>
+          </q-card-section>
+          <q-card-section>
+            <div>
+              <div class="q-gutter-y-md column">
+                <q-input type="textarea" outlined square v-model="selected_keterangan" label="Keterangan Invoice" class="q-mb-sm" />
+              </div>
+            </div>
+          </q-card-section>
+
+        </div>
+      </div>
+
+      <div>
+        <q-separator />
+        <q-card-actions align="right">
+          <q-btn color="blue-10" icon="save" label="Simpan" @click="InsertDataKeterangan()" />
+        </q-card-actions>
+      </div>
+
+    </q-card>
+
+  </q-dialog>
+
+  <q-dialog v-model="modal_pilih_keterangan" persistent>
+    <q-card>
+      <q-bar class="bg-primary text-white">
+      Pilih Keterangan
+        <q-space />
+        <q-btn dense flat icon="close" v-close-popup>
+          <q-tooltip class="bg-white text-primary">Close</q-tooltip>
+        </q-btn>
+      </q-bar>
+      <q-card-section class="row items-center">
+        <q-list bordered separator padding color="dark">
+          <q-item v-for="(keterangan, index) in data_customer_desc" clickable v-ripple @click="SelectDataKeterangan(keterangan)">
+            <q-item-section avatar>
+              <q-avatar color="primary" text-color="white">
+                {{ index + 1 }}
+              </q-avatar>
+            </q-item-section>
+            <q-item-section>
+              <q-item-label caption>
+                {{ keterangan }}
+              </q-item-label>
+            </q-item-section>
+          </q-item>
+        </q-list>
+      </q-card-section>
+
+      <q-card-actions align="right">
+        <q-btn flat label="Cancel" color="primary" v-close-popup />
+        <q-btn flat label="Hapus" color="red" @click="DeleteDataKeterangan()" />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+
   <q-dialog v-model="modal_confirm_delete_user" persistent>
     <q-card>
       <q-card-section class="row items-center">
@@ -490,6 +612,20 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
+
+  <q-dialog v-model="modal_confirm_delete_keterangan" persistent>
+    <q-card>
+      <q-card-section class="row items-center">
+        <q-avatar icon="person" color="red" text-color="white" />
+        <span class="q-ml-sm">Anda yakin ingin menghapus keterangan {{ invoice_description }}?</span>
+      </q-card-section>
+
+      <q-card-actions align="right">
+        <q-btn flat label="Cancel" color="primary" v-close-popup />
+        <q-btn flat label="Hapus" color="red" @click="DeleteDataKeterangan()" />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 </template>
 
 <script>
@@ -498,7 +634,7 @@ import { ref } from 'vue'
 import axios from 'axios'
 import moment from 'moment'
 import toRupiah from '@develoka/angka-rupiah-js';
-import { CUSTOMER, TEMPLATE, EMPLOYEE, TEMPLATE_ACTIVE, TRANSACTION, TRANSACTION_INVOICE, TRANSACTION_OPEN, REVISION, DOCUMENT } from '../constants/constant.global';
+import { CUSTOMER, CUSTOMER_DESC, TEMPLATE, EMPLOYEE, TEMPLATE_ACTIVE, TRANSACTION, TRANSACTION_INVOICE, TRANSACTION_OPEN, REVISION, DOCUMENT } from '../constants/constant.global';
 import { terbilang as FuncTerbilang } from '../utils/terbilang.util';
 import { GetCookie, RemoveCookie } from '../utils/cookie.util';
 import { DOCUMENT_ROOT } from '../constants/constant.global';
@@ -509,6 +645,7 @@ export default {
     return {
       data_revision: [],
       data_transaction: [],
+      data_customer_desc: [],
       data_active_user: [],
       level_active_user: '',
       data_employee: [],
@@ -519,6 +656,7 @@ export default {
       selected_employee: [],
       selected_customer: [],
       selected_template: [],
+      selected_keterangan: '',
       new_data_revision: [],
       filter_nama_usaha: [],
       latest_invoice: '',
@@ -541,8 +679,11 @@ export default {
       modal_document: ref(false),
       modal_user: ref(false),
       modal_customer: ref(false),
+      modal_keterangan: ref(false),
+      modal_pilih_keterangan: ref(false),
       modal_confirm_delete_user: ref(false),
       modal_confirm_delete_customer: ref(false),
+      modal_confirm_delete_keterangan: ref(false),
       maximizedToggle: ref(false),
       id_usaha: '',
       customer_name: '',
@@ -636,6 +777,19 @@ export default {
             this.showNotif('negative', 'Terjadi kesalahan. Error: ' + err)
           })
       },
+      async GetDataCustomerDescription() {
+        this.data_customer_desc = [];
+        await axios.get(CUSTOMER_DESC)
+          .then(response => {
+            if (response.status == 200) {
+              response.data.data.forEach(row => {
+                this.data_customer_desc.push(row.customer_desc);
+              })
+            }
+          }).catch(err => {
+            this.showNotif('negative', 'Terjadi kesalahan. Error: ' + err)
+          })
+      },
       async GetDataTemplate() {
         this.data_template = [];
         await axios.get(TEMPLATE)
@@ -678,6 +832,10 @@ export default {
             this.showNotif('negative', 'Terjadi kesalahan. Error: ' + err)
           })
       },
+      SetCustomer(val) {
+        invoice_description.value = val;
+
+      },
 
       showNotif(type, message) {
         const position = 'top-right';
@@ -712,10 +870,42 @@ export default {
       this.customer_address = customer.customer_address;
       this.btn_customer = 'Edit Customer'
     },
+    async SelectDataKeterangan(keterangan) {
+      this.selected_keterangan = keterangan;
+      this.invoice_description = keterangan;
+      this.modal_pilih_keterangan = false;
+    },
     async HandleDataCustomer() {
       if (this.btn_customer == 'Edit Customer') this.UpdateDataCustomer();
       else {
         this.InsertDataCustomer();
+      }
+    },
+    async InsertDataKeterangan() {
+      try {
+        if (!this.HasLogin()) return;
+        if (this.selected_keterangan == '') this.showNotif('warning', 'Keterangan Invoice Tidak Boleh Kosong')
+        else {
+          const payload = {
+            customer_description: this.selected_keterangan,
+          }
+          await axios.post(CUSTOMER_DESC, payload, {
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+              }
+            }).then(response => {
+              if (response.status == 200) {
+                this.selected_keterangan = '';
+                this.GetDataCustomerDescription();
+                this.showNotif('positive', 'Data keterangan berhasil disimpan.');
+              }
+            }).catch(error => {
+              this.showNotif('negative', 'Data keterangan gagal disimpan. Pesan: ' + error.response.data.message)
+          })
+        }
+      }
+      catch (err) {
+        this.showNotif('negative', 'Data customer gagal disimpan. Error: ' + err)
       }
     },
     async InsertDataCustomer() {
@@ -816,6 +1006,30 @@ export default {
       }
       catch (err) {
         this.showNotif('negative', 'Data customer gagal disimpan. Error: ' + err)
+      }
+    },
+    async DeleteDataKeterangan() {
+      try {
+        if (!this.HasLogin()) return;
+        if (this.selected_keterangan == '') this.showNotif('warning', 'Pilih keterangan yang mau dihapus')
+        else {
+          await axios.delete(CUSTOMER_DESC + '?ket=' + this.selected_keterangan, {
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+              }
+            }).then(response => {
+              if (response.status == 200) {
+                this.GetDataCustomerDescription();
+                this.showNotif('positive', 'Data keterangan berhasil disimpan.');
+                this.modal_confirm_delete_keterangan = false;
+              }
+            }).catch(error => {
+              this.showNotif('negative', 'Data keterangan gagal disimpan. Pesan: ' + error.response.data.message)
+            })
+        }
+      }
+      catch (err) {
+        this.showNotif('negative', 'Data keterangan gagal disimpan. Error: ' + err)
       }
     },
     async HandleDataEmployee() {
@@ -1034,6 +1248,7 @@ export default {
       this.tax = this.selected_transaction.tax;
       this.percentage_ppn = this.selected_transaction.percentage_ppn;
       this.total = this.selected_transaction.total;
+      this.GetLatestInvoiceTransaction();
     },
     async SelectDataTemplate(template) {
       if (!this.HasLogin()) return;
@@ -1077,7 +1292,7 @@ export default {
   watch: {
     cost() {
       this.formatted_cost = toRupiah(this.cost, { dot: ',', floatingPoint: 0 });
-      this.tax = this.cost * this.percentage_ppn / 100;
+      this.tax = Math.round(this.cost * this.percentage_ppn / 100);
       this.formatted_tax = toRupiah(this.tax, { dot: ',', floatingPoint: 0 });
       this.total = parseInt(this.cost) + parseInt(this.tax);
       this.formatted_total = toRupiah(this.total, { dot: ',', floatingPoint: 0 });
@@ -1087,7 +1302,7 @@ export default {
 
     },
     percentage_ppn() {
-      this.tax = this.cost * this.percentage_ppn / 100;
+      this.tax = Math.round(this.cost * this.percentage_ppn / 100);
       this.formatted_tax = toRupiah(this.tax, { dot: ',', floatingPoint: 0 });
       this.total = parseInt(this.cost) + parseInt(this.tax);
       this.formatted_total = toRupiah(this.total, { dot: ',', floatingPoint: 0 });
@@ -1103,6 +1318,7 @@ export default {
     this.GetLatestInvoiceTransaction()
     this.HasLogin();
     this.level_active_user = atob(GetCookie('level'));
+    this.GetDataCustomerDescription();
   }
 }
 </script>
